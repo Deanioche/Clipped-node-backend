@@ -11,15 +11,15 @@ const User = sequelize.define('user', {
   username: { type: DataTypes.STRING, allowNull: true, },
   oneline: { type: DataTypes.STRING, allowNull: true, },
   hashtags: { type: DataTypes.STRING, allowNull: true, },
-  profile_image: { type: DataTypes.STRING, allowNull: true, },
+  profileImage: { type: DataTypes.STRING, allowNull: true, },
   school: { type: DataTypes.STRING, allowNull: true, },
   major: { type: DataTypes.STRING, allowNull: true, },
-  entry_year: { type: DataTypes.STRING, allowNull: true, },
+  entryYear: { type: DataTypes.STRING, allowNull: true, },
   job: { type: DataTypes.STRING, allowNull: true, },
   // Required fields
-  join_method: { type: DataTypes.STRING, allowNull: false, defaultValue: 'email', },
-  created_at: { type: DataTypes.DATE, defaultValue: NOW, allowNull: false, },
-  updated_at: { type: DataTypes.DATE, defaultValue: NOW, allowNull: false, },
+  joinMethod: { type: DataTypes.STRING, allowNull: false, defaultValue: 'email', },
+}, {
+  underscored: true,
 });
 
 export { User }

@@ -14,3 +14,6 @@ Clip.belongsTo(User, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 
 Clip.belongsToMany(Tag, { through: 'clip_tag', foreignKey: 'clip_id', timestamps: false });
 Tag.belongsToMany(Clip, { through: 'clip_tag', foreignKey: 'tag_id'});
+Clip.belongsToMany(Paper, { through: 'clip_paper', foreignKey: 'clip_id', timestamps: false });
+Paper.belongsToMany(Clip, { through: 'clip_paper', foreignKey: 'paper_id', timestamps: false });
+

@@ -23,13 +23,25 @@ const findUserById = async (req, res) => {
 }
 
 const updateMe = async (req, res) => {
-  console.log(123, req.body);
   if (Object.values(req.body).length === 0) {
     return res.status(400).json({ message: "Request body is missing" });
   }
   const user = await User.findByPk(req.user.id);
   if (!user) {
     return res.status(404).json({ message: "User not found" });
+  }
+
+  // check if email is already taken
+  if (req.body.email) {
+    const userWithEmail = await User.findOne({
+      where: {
+        email: req.body.email,
+        id: { [Op.ne]: req.user.id }
+      }
+    });
+    if (userWithEmail) {
+      return res.status(400).json({ message: "Email is already taken" });
+    }
   }
   res.json(await user.update(req.body));
 }

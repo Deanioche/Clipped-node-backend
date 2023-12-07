@@ -6,10 +6,9 @@ const findFollowings = async (req, res) => {
   if (!user) {
     return res.status(404).json({ message: "User not found" });
   }
-  // find all followings of the user
   const followings = await Follow.findAll({
     where: {
-      follower_id: user.id
+      followerId: user.id
     },
     include: [
       {
@@ -17,6 +16,10 @@ const findFollowings = async (req, res) => {
         as: 'Following'
       }
     ]
+  });
+
+  followings.sort((a, b) => {
+    return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
   res.json(followings);
@@ -30,7 +33,7 @@ const findFollowers = async (req, res) => {
   // find all followers of the user
   const followers = await Follow.findAll({
     where: {
-      following_id: user.id
+      followingId: user.id
     },
     include: [
       {
@@ -38,6 +41,10 @@ const findFollowers = async (req, res) => {
         as: 'Follower'
       }
     ]
+  });
+
+  followers.sort((a, b) => {
+    return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
   res.json(followers);
@@ -55,8 +62,8 @@ const addFollow = async (req, res) => {
   // check if already following
   const existingFollow = await Follow.findOne({
     where: {
-      follower_id: user.id,
-      following_id: target.id
+      followerId: user.id,
+      followingId: target.id
     }
   });
   if (existingFollow)
@@ -64,8 +71,8 @@ const addFollow = async (req, res) => {
 
   // add follow
   const follow = await Follow.create({
-    follower_id: user.id,
-    following_id: target.id
+    followerId: user.id,
+    followingId: target.id
   });
   if (!follow)
     return res.status(500).json({ message: "Failed to add follow" });
@@ -85,8 +92,8 @@ const deleteFollow = async (req, res) => {
   // check if already following
   const existingFollow = await Follow.findOne({
     where: {
-      follower_id: user.id,
-      following_id: target.id
+      followerId: user.id,
+      followingId: target.id
     }
   });
   if (!existingFollow)
@@ -95,8 +102,8 @@ const deleteFollow = async (req, res) => {
   // delete follow
   const follow = await Follow.destroy({
     where: {
-      follower_id: user.id,
-      following_id: target.id
+      followerId: user.id,
+      followingId: target.id
     }
   });
   if (!follow)

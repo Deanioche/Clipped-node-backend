@@ -5,6 +5,8 @@ import get404 from './routes/error.js';
 import sequelize from './utils/db.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import tagRoutes from './routes/tagRoutes.js';
+import clipRoutes from './routes/clipRoutes.js';
 import authenticateJWT from './utils/authenticateJWT.js';
 import './utils/associations.js';
 
@@ -14,10 +16,15 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// public routes
 app.use('/auth', authRoutes);
 
+// protected routes except PATCH /user/me
+app.use('/user', userRoutes);
+
 // protected routes
-app.use('/user', authenticateJWT, userRoutes);
+app.use('/tag', authenticateJWT, tagRoutes);
+app.use('/clip', authenticateJWT, clipRoutes);
 
 // not found
 app.use(get404);
