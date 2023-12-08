@@ -10,9 +10,12 @@ const login = async (req, res) => {
   const { login, password } = req.body;
 
   const user = await User.findOne({ where: { login } });
-  if (!user) return res.status(404).json({ message: "User not found" });
+  if (!user)
+    return res.status(404).json({ message: "User not found" });
   const isPasswordCorrect = bcrypt.compareSync(password, user.password);
-  if (!isPasswordCorrect) return res.status(400).json({ message: "Invalid credentials" });
+  if (!isPasswordCorrect)
+    return res.status(400).json({ message: "Invalid credentials" });
+
   const accessToken = jwt.sign({ id: user.id }, process.env.JWT_AT_SECRET, { expiresIn: process.env.JWT_AT_EXPIRES_IN });
   const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_RT_SECRET, { expiresIn: process.env.JWT_RT_EXPIRES_IN });
   refreshTokens.push(refreshToken);
@@ -58,12 +61,7 @@ const token = async (req, res) => {
 
   jwt.verify(refreshToken, process.env.JWT_RT_SECRET, (err, user) => {
     if (err) return res.sendStatus(403);
-    const accessToken = jwt.sign({
-      username: user.username
-    },
-      process.env.JWT_AT_SECRET, {
-      expiresIn: process.env.JWT_AT_EXPIRES_IN
-    });
+    const accessToken = jwt.sign({ id: user.id }, process.env.JWT_AT_SECRET, { expiresIn: process.env.JWT_AT_EXPIRES_IN });
     res.json({ accessToken });
   });
 }

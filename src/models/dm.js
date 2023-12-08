@@ -1,13 +1,15 @@
 import { DataTypes, UUIDV4, NOW } from 'sequelize';
 import sequelize from '../utils/db.js';
 
-const Follow = sequelize.define('follow', {
+const Dm = sequelize.define('dm', {
   id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true, allowNull: false, },
-  followerId: { type: DataTypes.UUID, allowNull: false, },
-  followingId: { type: DataTypes.UUID, allowNull: false, },
+  content: { type: DataTypes.TEXT, allowNull: true, },
+  senderId: { type: DataTypes.UUID, allowNull: false, },
+  receiverId: { type: DataTypes.UUID, allowNull: false, },
 }, {
   underscored: true,
   freezeTableName: true,
+  updatedAt: false,
 });
 
-export { Follow }
+export { Dm }

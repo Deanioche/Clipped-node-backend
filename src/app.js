@@ -7,6 +7,7 @@ import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import tagRoutes from './routes/tagRoutes.js';
 import clipRoutes from './routes/clipRoutes.js';
+import paperRoutes from './routes/paperRoutes.js';
 import authenticateJWT from './utils/authenticateJWT.js';
 import './utils/associations.js';
 
@@ -25,13 +26,14 @@ app.use('/user', userRoutes);
 // protected routes
 app.use('/tag', authenticateJWT, tagRoutes);
 app.use('/clip', authenticateJWT, clipRoutes);
+app.use('/paper', authenticateJWT, paperRoutes);
 
 // not found
 app.use(get404);
 
 // sync database and start server
-// sequelize.sync({ force: true }).then(() => {
-sequelize.sync().then(() => {
+sequelize.sync({ force: true }).then(() => {
+// sequelize.sync().then(() => {
   console.log('🔥 All tables created successfully!');
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {

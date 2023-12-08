@@ -20,6 +20,7 @@ const User = sequelize.define('user', {
   joinMethod: { type: DataTypes.STRING, allowNull: false, defaultValue: 'email', },
 }, {
   underscored: true,
+  freezeTableName: true,
 });
 
 export { User }

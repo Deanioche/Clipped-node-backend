@@ -9,8 +9,9 @@ const router = express.Router();
 
 // for test
 // return all users
-router.get('/', authBeforeName, (req, res) => {
+router.get('/all', authBeforeName, (req, res) => {
   User.findAll().then((users) => {
+    users.sort((a, b) => b.createdAt - a.createdAt);
     users.forEach((user) => {
       console.log({
         id: user.id,
@@ -19,7 +20,7 @@ router.get('/', authBeforeName, (req, res) => {
         login: user.login
       });
     });
-    res.json(users)
+    res.json(users);
   });
 });
 
