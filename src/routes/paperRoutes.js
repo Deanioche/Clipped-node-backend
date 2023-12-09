@@ -1,11 +1,12 @@
 import express from 'express';
 import { Paper } from '../models/paper.js';
-import { createComment, createLike, createPaper, createPaperClip, deleteLike, deletePaper, deletePaperClip, findPaperByAuthorId, findPaperById, publishPaper, updatePaper } from '../controllers/paperController.js';
+import { createLike, createPaper, createPaperClip, deleteLike, deletePaper, deletePaperClip, findPaperByAuthorId, findPaperById, publishPaper, updatePaper } from '../controllers/paperController.js';
+import { createComment, deleteComment, getComments, updateComment } from '../controllers/commentController.js';
 
 const router = express.Router();
 
 /**
- * @TESTF
+ * @TEST
 */
 router.get('/all', async (req, res) => {
   try {
@@ -38,8 +39,8 @@ router.delete('/:id/clip', deletePaperClip);
 // @TODO: 4 apis for comment 
 router.get('/:id/comment', getComments);
 router.post('/:id/comment', createComment);
-router.patch('/:id/comment/:id', updateComment);
-router.delete('/:id/comment/:id', deleteComment);
+router.patch('/:paperId/comment/:commentId', updateComment);
+router.delete('/:paperId/comment/:commentId', deleteComment);
 
 router.get('/:id', findPaperById);
 router.patch('/:id', updatePaper);

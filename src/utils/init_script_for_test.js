@@ -73,6 +73,13 @@ const follow = async (loginToFollow) => {
   }).then(res => res.json());
 }
 
+const getPapers = async () => {
+  return await fetch(`http://localhost:3000/paper/all`, {
+    method: "GET",
+    headers,
+  }).then(res => res.json());
+}
+
 const createPaper = async (title) => {
 
   // load lorem ipsum sentences
@@ -134,6 +141,17 @@ const unBookmarkPaper = async (paperId) => {
 }
 
 const createComment = async (paperId) => {
+  return await fetch(`http://localhost:3000/paper/${paperId}/comment`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ content: "ABCABC123" })
+  }).then(res => res.json()).then(res => {
+    console.log(`💬 created`, res.content.substring(0, 20));
+    return res.id;
+  });
+}
+
+const updateComment = async (paperId, cmtId) => {
   let content = "";
   await fetch("https://baconipsum.com/api/?type=all-meat&paras=1", {
     method: "GET",
@@ -142,16 +160,26 @@ const createComment = async (paperId) => {
     content = res[0];
   });
 
-  await fetch(`http://localhost:3000/paper/${paperId}/comment`, {
-    method: "POST",
+  await fetch(`http://localhost:3000/paper/${paperId}/comment/${cmtId}`, {
+    method: "PATCH",
     headers,
     body: JSON.stringify({ content })
   }).then(res => res.json()).then(res => {
-    console.log(`💬 created`, res.content.substring(0, 20));
+    console.log(`💬 updated`, res.content.substring(0, 20));
   });
 }
 
+const deleteComment = async (paperId, cmtId) => {
+  await fetch(`http://localhost:3000/paper/${paperId}/comment/${cmtId}`, {
+    method: "DELETE",
+    headers,
+  }).then(res => res.json()).then(res => {
+    console.log(`💬`, res);
+  });
+}
 const run_init_script = async () => {
+
+  // signup, update user
   await signup("dohyulee");
   await signup("AAAA");
 
@@ -170,10 +198,28 @@ const run_init_script = async () => {
   unlikePaper(papers[0]);
   unBookmarkPaper(papers[1]);
 
-  // create comment
-  const papersToPutComment = [0, 0, 1, 1, 2, 2, 2];
+  // create comments
+  const papersToPutComment = [0, 0, 1, 1, 2, 2, 2, 3, 3, 3, 3];
   for (let paperId of papersToPutComment) {
-    createComment(papers[paperId]);
+    await createComment(papers[paperId]);
+  }
+
+  // update or delete comments
+  const paperIds = await getPapers().then((res) => res.map(paper => paper.id));
+  for (let pId of paperIds) {
+    const cIds = await fetch(`http://localhost:3000/paper/${pId}/comment`, {
+      method: "GET",
+      headers,
+    }).then(res => res.json()).then(res => {
+      return res.map(cmt => cmt.id);
+    });
+    for (let cId of cIds) {
+      // update or delete comments with 50% probability
+      if (Math.random() < 0.5)
+        deleteComment(pId, cId);
+      else
+        updateComment(pId, cId);
+    }
   }
 
   // create tag

@@ -179,27 +179,6 @@ const deletePaperClip = async (req, res) => {
   }
 };
 
-const createComment = async (req, res) => {
-  try {
-    const paper = await Paper.findByPk(req.params.id);
-    if (!paper)
-      return res.status(404).json({ message: "Paper not found" });
-
-    const user = await User.findByPk(req.user.id);
-    if (!user)
-      return res.status(404).json({ message: "User not found" });
-
-    const comment = await PaperComment.create({
-      content: req.body.content,
-      paperId: paper.id,
-      userId: user.id,
-    });
-    return res.json(comment);
-  } catch (error) {
-    res.status(500).json({ message: "Internal server error", error });
-  }
-}
-
 export {
   createPaper,
   findPaperByAuthorId,
@@ -211,5 +190,4 @@ export {
   deleteLike,
   createPaperClip,
   deletePaperClip,
-  createComment,
 };
