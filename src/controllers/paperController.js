@@ -1,6 +1,8 @@
 import { Tag } from '../models/tag.js';
 import { Clip } from '../models/clip.js';
 import { Paper } from '../models/paper.js';
+import { User } from '../models/user.js';
+import { PaperComment } from '../models/paperComment.js';
 
 const findPaperByAuthorId = async (req, res) => {
   try {
@@ -93,6 +95,111 @@ const deletePaper = async (req, res) => {
   }
 };
 
+const createLike = async (req, res) => {
+  try {
+    const paper = await Paper.findByPk(req.params.id);
+    if (!paper)
+      return res.status(404).json({ message: "Paper not found" });
+
+    const user = await User.findByPk(req.user.id);
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    const alreadyLiked = await paper.hasLike(user);
+    if (alreadyLiked)
+      return res.status(400).json({ message: "Already liked" });
+
+    const newLike = await paper.addLike(user);
+    return res.json(newLike);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};
+
+const deleteLike = async (req, res) => {
+  try {
+    const paper = await Paper.findByPk(req.params.id);
+    if (!paper)
+      return res.status(404).json({ message: "Paper not found" });
+
+    const user = await User.findByPk(req.user.id);
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    const alreadyLiked = await paper.hasLike(user);
+    if (!alreadyLiked)
+      return res.status(400).json({ message: "Not liked yet" });
+
+    const deletedLike = await paper.removeLike(user);
+    return res.json(deletedLike);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};
+
+const createPaperClip = async (req, res) => {
+  try {
+    const paper = await Paper.findByPk(req.params.id);
+    if (!paper)
+      return res.status(404).json({ message: "Paper not found" });
+
+    const user = await User.findByPk(req.user.id);
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    const alreadyClipped = await paper.hasBookmark(user);
+    if (alreadyClipped)
+      return res.status(400).json({ message: "Already clipped" });
+
+    const newClip = await paper.addBookmark(user);
+    return res.json(newClip);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};
+
+const deletePaperClip = async (req, res) => {
+  try {
+    const paper = await Paper.findByPk(req.params.id);
+    if (!paper)
+      return res.status(404).json({ message: "Paper not found" });
+
+    const user = await User.findByPk(req.user.id);
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    const alreadyClipped = await paper.hasBookmark(user);
+    if (!alreadyClipped)
+      return res.status(400).json({ message: "Not clipped yet" });
+
+    const deletedClip = await paper.removeBookmark(user);
+    return res.json(deletedClip);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};
+
+const createComment = async (req, res) => {
+  try {
+    const paper = await Paper.findByPk(req.params.id);
+    if (!paper)
+      return res.status(404).json({ message: "Paper not found" });
+
+    const user = await User.findByPk(req.user.id);
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
+
+    const comment = await PaperComment.create({
+      content: req.body.content,
+      paperId: paper.id,
+      userId: user.id,
+    });
+    return res.json(comment);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
+}
+
 export {
   createPaper,
   findPaperByAuthorId,
@@ -100,4 +207,9 @@ export {
   updatePaper,
   publishPaper,
   deletePaper,
+  createLike,
+  deleteLike,
+  createPaperClip,
+  deletePaperClip,
+  createComment,
 };

@@ -1,6 +1,6 @@
 import express from 'express';
 import { Paper } from '../models/paper.js';
-import { createPaper, deletePaper, findPaperByAuthorId, findPaperById, publishPaper, updatePaper } from '../controllers/paperController.js';
+import { createComment, createLike, createPaper, createPaperClip, deleteLike, deletePaper, deletePaperClip, findPaperByAuthorId, findPaperById, publishPaper, updatePaper } from '../controllers/paperController.js';
 
 const router = express.Router();
 
@@ -18,10 +18,31 @@ router.get('/all', async (req, res) => {
 });
 
 router.get('/', findPaperByAuthorId);
-router.get('/:id', findPaperById);
 router.post('/', createPaper);
-router.patch('/:id', updatePaper);
+
+// @TODO
+router.delete('/', (req, res) => {
+  res.status(405).json({ message: "send ids" });
+});
+
 router.patch('/:id/publish', publishPaper);
+
+// @TODO
+router.post('/:id/like', createLike);
+router.delete('/:id/like', deleteLike);
+
+// @TODO
+router.post('/:id/clip', createPaperClip);
+router.delete('/:id/clip', deletePaperClip);
+
+// @TODO: 4 apis for comment 
+router.get('/:id/comment', getComments);
+router.post('/:id/comment', createComment);
+router.patch('/:id/comment/:id', updateComment);
+router.delete('/:id/comment/:id', deleteComment);
+
+router.get('/:id', findPaperById);
+router.patch('/:id', updatePaper);
 router.delete('/:id', deletePaper);
 
 export default router;

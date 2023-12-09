@@ -11,6 +11,11 @@ import paperRoutes from './routes/paperRoutes.js';
 import authenticateJWT from './utils/authenticateJWT.js';
 import './utils/associations.js';
 
+/** 
+ * @TEST
+ */
+import { run_init_script } from './utils/init_script_for_test.js';
+
 config();
 const app = express();
 
@@ -38,8 +43,15 @@ sequelize.sync({ force: true }).then(() => {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+
+
+    /** 
+     * @TEST
+     */
+    run_init_script();
   });
 }).catch((error) => {
   console.error('🔥🔥 Error creating tables:', error);
 });
+
 

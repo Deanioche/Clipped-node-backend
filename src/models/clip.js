@@ -11,6 +11,7 @@ const Clip = sequelize.define('clip', {
   publishedAt: { type: DataTypes.DATE, defaultValue: NOW, allowNull: false, },
 }, {
   underscored: true,
+  freezeTableName: true,
 });
 
 const Clip_link = sequelize.define('clip_link', {
