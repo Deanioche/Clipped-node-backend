@@ -41,8 +41,8 @@ try {
 }
 
 // sync database and start server
-// sequelize.sync({ force: true }).then(() => {
-sequelize.sync().then(() => {
+sequelize.sync({ force: true }).then(() => {
+// sequelize.sync().then(() => {
   console.log('🔥 All tables created successfully!');
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
@@ -52,7 +52,7 @@ sequelize.sync().then(() => {
     /** 
      * @TEST
      */
-    // run_init_script();
+    run_init_script();
   });
 }).catch((error) => {
   console.error('🔥🔥 Error creating tables:', error);

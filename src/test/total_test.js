@@ -27,7 +27,7 @@ const run_init_script = async () => {
      * follow
      * unfollow
      */
-    userList.filter(user => user.login !== userData.login).forEach( async user => {
+    userList.filter(user => user.login !== userData.login).forEach(async user => {
       await follow(headers, user.login);
     });
 
@@ -290,6 +290,10 @@ const getPapers = async (headers) => {
 
 const createPaper = async (headers, title) => {
   let content = "haha this is conten";
+  // @TEST
+  const start = new Date(2021, 0, 1);
+  const end = new Date();
+  const randomDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 
   return await fetch("http://localhost:3000/paper", {
     method: "POST",
@@ -297,7 +301,8 @@ const createPaper = async (headers, title) => {
     body: JSON.stringify({
       "title": title,
       "content": content,
-      "tags": ["AAA", "BBB"]
+      "tags": ["AAA", "BBB"],
+      "createdAt": randomDate,
     })
   }).then(res => res.json())
     .then(res => {

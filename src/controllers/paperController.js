@@ -1,32 +1,57 @@
 import { Paper } from '../models/paper.js';
 import { User } from '../models/user.js';
 import { page_limit } from '../utils/config.js';
+import { Op } from 'sequelize';
 
 // GET /paper/:id/comments
 const findPaperByAuthorId = async (req, res) => {
-  const cursor = req.query.cursor || new Date();
+  let cursor = req.query.cursor;
   const limit = Number(req.query.limit || page_limit);
-  console.log(cursor, limit);
+  const authorId = req.query.authorId;
 
-  if (!cursor || isNaN(limit) || limit < 1) {
-    return res.status(400).json({ message: "Invalid query" });
+  // authorId 검증
+  if (!authorId) {
+    return res.status(400).json({ message: "Missing authorId in query" });
+  }
+
+  // limit 검증
+  if (isNaN(limit) || limit < 1) {
+    return res.status(400).json({ message: "Invalid limit value" });
+  }
+
+  // cursor 검증 및 설정
+  if (cursor) {
+    if (isNaN(new Date(cursor))) {
+      return res.status(400).json({ message: "Invalid cursor format" });
+    }
+  } else {
+    // cursor가 제공되지 않은 경우, 현재 시간을 기준으로 설정
+    cursor = new Date().toISOString();
   }
 
   try {
     const papers = await Paper.findAll({
       where: {
-        authorId: req.query.authorId,
-      }
+        authorId,
+        createdAt: {
+          [Op.lt]: new Date(cursor)  // cursor보다 이전 시간을 가진 항목을 찾습니다.
+        }
+      },
+      limit,
+      order: [['createdAt', 'DESC']] // 최신 항목부터 가져옵니다.
     });
 
-    papers.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const nextCursor = papers.length > 0 ? papers[papers.length - 1].createdAt.toISOString() : null;
 
-    // pagination
-    const offset = papers.findIndex(paper => new Date(paper.createdAt).getTime() < cursor.getTime());
     res.json({
-      data: papers.slice(offset, offset + limit), cursor: papers[offset + limit]?.createdAt || null
+      data: papers.map(paper => ({
+        id: paper.id,
+        // authorId: paper.authorId,
+        // title: paper.title,
+        createdAt: paper.createdAt,
+      })),
+      cursor: nextCursor
     });
-    console.log(papers[offset + limit]?.createdAt || null);
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });
   }
@@ -79,16 +104,10 @@ const deletePaperByIds = async (req, res) => {
 
 // POST /paper
 const createPaper = async (req, res) => {
-
-  // @TEST
-  const start = new Date(2021, 0, 1);
-  const end = new Date();
-  const randomDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
   try {
     const paper = await Paper.create({
       ...req.body,
       authorId: req.user.id,
-      createdAt: randomDate,
     });
 
     res.json(paper);
