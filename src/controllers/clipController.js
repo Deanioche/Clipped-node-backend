@@ -3,7 +3,7 @@ import { Clip, Clip_link } from '../models/clip.js';
 import { Paper } from '../models/paper.js';
 import { User } from '../models/user.js';
 
-const findFilteredClips = async (req, res) => {
+const findClipsByFilter = async (req, res) => {
   const { userId, tagId } = req.query;
 
   if (!userId && !tagId) {
@@ -50,7 +50,7 @@ const findFilteredClips = async (req, res) => {
       });
     }
 
-    clips.sort((a, b) => b.createdAt - a.createdAt);
+    clips.sort((a, b) => a.startedAt - b.startedAt);
     res.json(clips);
 
   } catch (error) {
@@ -128,8 +128,88 @@ const createClip = async (req, res) => {
   }
 }
 
+const updateClip = async (req, res) => {
+  try {
+    const clip = await Clip.findByPk(req.params.id);
+    if (!clip) {
+      return res.status(404).json({ message: "Clip not found" });
+    }
+    if (clip.userId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    await clip.update(req.body);
+    res.json(clip);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+const deleteClip = async (req, res) => {
+  try {
+    const clip = await Clip.findByPk(req.params.id);
+    if (!clip) {
+      return res.status(404).json({ message: "Clip not found" });
+    }
+    if (clip.userId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    await clip.destroy();
+    res.json({ message: "Clip deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+const publishClip = async (req, res) => {
+  try {
+    const clip = await Clip.findByPk(req.params.id);
+    if (!clip) {
+      return res.status(404).json({ message: "Clip not found" });
+    }
+    if (clip.userId !== req.user.id) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    await clip.update({ publishedAt: new Date() });
+    res.json(clip);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+const likeClip = async (req, res) => {
+  try {
+    const clip = await Clip.findByPk(req.params.id);
+
+    if (!clip) {
+      return res.status(404).json({ message: "Clip not found" });
+    }
+    await clip.addClipLike(req.user.id);
+    res.json(clip);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
+}
+
+const unlikeClip = async (req, res) => {
+  try {
+    const clip = await Clip.findByPk(req.params.id);
+    if (!clip) {
+      return res.status(404).json({ message: "Clip not found" });
+    }
+    await clip.removeClipLike(req.user.id);
+    res.json(clip);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
 export {
-  findFilteredClips,
+  findClipsByFilter,
   findClipById,
-  createClip
+  createClip,
+  updateClip,
+  deleteClip,
+  publishClip,
+  likeClip,
+  unlikeClip
 };

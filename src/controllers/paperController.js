@@ -105,11 +105,11 @@ const createLike = async (req, res) => {
     if (!user)
       return res.status(404).json({ message: "User not found" });
 
-    const alreadyLiked = await paper.hasLike(user);
+    const alreadyLiked = await paper.hasPaperLike(user);
     if (alreadyLiked)
       return res.status(400).json({ message: "Already liked" });
 
-    const newLike = await paper.addLike(user);
+    const newLike = await paper.addPaperLike(user);
     return res.json(newLike);
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });
@@ -126,11 +126,11 @@ const deleteLike = async (req, res) => {
     if (!user)
       return res.status(404).json({ message: "User not found" });
 
-    const alreadyLiked = await paper.hasLike(user);
+    const alreadyLiked = await paper.hasPaperLike(user);
     if (!alreadyLiked)
       return res.status(400).json({ message: "Not liked yet" });
 
-    const deletedLike = await paper.removeLike(user);
+    const deletedLike = await paper.removePaperLike(user);
     return res.json(deletedLike);
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });

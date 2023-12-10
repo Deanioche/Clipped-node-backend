@@ -23,7 +23,6 @@ const login = async (req, res) => {
 }
 
 const signup = async (req, res) => {
-  console.log(req.body);
   const { name, email, login, password } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
 

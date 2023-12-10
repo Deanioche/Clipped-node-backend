@@ -24,11 +24,11 @@ Paper.belongsToMany(Clip, { through: 'clip_paper', foreignKey: 'paper_id', times
 Paper.belongsToMany(User, { through: 'paper_clip', foreignKey: 'paper_id', timestamps: false, as: 'bookmark' });
 User.belongsToMany(Paper, { through: 'paper_clip', foreignKey: 'user_id', timestamps: false, as: 'bookmark' });
 
-Paper.belongsToMany(User, { through: 'paper_like', foreignKey: 'paper_id', timestamps: false, as: 'like' });
-User.belongsToMany(Paper, { through: 'paper_like', foreignKey: 'user_id', timestamps: false, as: 'like' });
+Paper.belongsToMany(User, { through: 'paper_like', foreignKey: 'paper_id', timestamps: false, as: 'paperLike' });
+User.belongsToMany(Paper, { through: 'paper_like', foreignKey: 'user_id', timestamps: false, as: 'paperLike' });
 
-Clip.belongsToMany(User, { through: 'clip_like', foreignKey: 'clip_id', timestamps: false });
-User.belongsToMany(Clip, { through: 'clip_like', foreignKey: 'user_id', timestamps: false });
+Clip.belongsToMany(User, { through: 'clip_like', foreignKey: 'clip_id', timestamps: false, as: 'clipLike' });
+User.belongsToMany(Clip, { through: 'clip_like', foreignKey: 'user_id', timestamps: false, as: 'clipLike' });
 
 PaperComment.belongsTo(User, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 PaperComment.belongsTo(Paper, { foreignKey: 'paper_id', onDelete: 'CASCADE' });

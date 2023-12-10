@@ -25,15 +25,15 @@ app.use(express.urlencoded({ extended: true }));
 try {
   // public routes
   app.use('/auth', authRoutes);
-  
+
   // protected routes except PATCH /user/me
   app.use('/user', userRoutes);
-  
+
   // protected routes
   app.use('/tag', authenticateJWT, tagRoutes);
   app.use('/clip', authenticateJWT, clipRoutes);
   app.use('/paper', authenticateJWT, paperRoutes);
-  
+
   // not found
   app.use(get404);
 } catch (error) {
