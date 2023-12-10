@@ -5,23 +5,61 @@ const router = express.Router();
 
 // get http GET /tag?userId=xxx
 router.get('/', async (req, res) => {
-  if (!req.query.userId) {
-    return res.status(400).json({ message: "userId is missing" });
+  try {
+    const tags = await Tag.findAll({
+      where: {
+        userId: req.user.id,
+      }
+    });
+    res.json(tags);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
   }
-  const tags = await Tag.findAll({ where: { userId: req.query.userId } });
-  res.json(tags);
 });
 
 router.post('/', async (req, res) => {
-  console.log(req.body);
-  const tag = await Tag.create({...req.body, userId: req.user.id});
-  res.send('POST /tag' + JSON.stringify(tag));
+  try {
+    const color = req.body.color;
+    if (!color) {
+      return res.status(400).json({ message: "color is missing" });
+    }
+
+    const name = req.body.name;
+    if (!name) {
+      return res.status(400).json({ message: "name is missing" });
+    }
+
+    const tag = await Tag.create({ color, name, userId: req.user.id });
+    res.json(tag);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
 });
 
-router.patch('/:id', (req, res) => {
-  console.log(req.params);
-  console.log(req.body);
-  res.send('PATCH /tag');
+router.patch('/:id', async (req, res) => {
+  try {
+    const tag = await Tag.findByPk(req.params.id);
+    if (!tag)
+      return res.status(404).json({ message: "Tag not found" });
+
+    if (tag.userId !== req.user.id)
+      return res.status(403).json({ message: "Forbidden" });
+
+    const color = req.body.color;
+    if (!color) {
+      return res.status(400).json({ message: "color is missing" });
+    }
+
+    const name = req.body.name;
+    if (!name) {
+      return res.status(400).json({ message: "name is missing" });
+    }
+
+    await tag.update({ color, name });
+    res.json(tag);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
 });
 
 export default router;

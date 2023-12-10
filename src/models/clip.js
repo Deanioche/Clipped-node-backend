@@ -15,6 +15,7 @@ const Clip = sequelize.define('clip', {
 });
 
 const Clip_link = sequelize.define('clip_link', {
+  id : { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true, allowNull: false, },
   clipId: { type: DataTypes.UUID, allowNull: false, },
   link: { type: DataTypes.STRING, allowNull: false, },
 }, {
@@ -23,4 +24,4 @@ const Clip_link = sequelize.define('clip_link', {
   freezeTableName: true,
 });
 
-export { Clip }
+export { Clip, Clip_link }

@@ -18,7 +18,7 @@ const authenticateJWT = (req, res, next) => {
 
       const userData = await User.findByPk(req.user.id);
       if (!userData)
-        return res.status(404).json({ message: "User not found" });
+        return res.status(404).json({ message: "User not found (JWT)" });
       if (!(userData.username))
         return res.status(404).json({ message: "no username" });
       next();
