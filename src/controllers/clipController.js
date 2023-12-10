@@ -6,7 +6,9 @@ import { page_limit } from '../utils/config.js';
 
 // GET /clip
 const findClipsByFilter = async (req, res) => {
-  const { userId, tagId, page = 1, limit = page_limit } = req.query;
+  let { userId, tagId, page = 1, limit = page_limit } = req.query;
+  page = Number(page);
+  limit = Number(limit);
 
   if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1) {
     return res.status(400).json({ message: "Invalid query" });

@@ -6,7 +6,9 @@ import { page_limit } from '../utils/config.js';
 
 // GET /paper/:id/comments
 const getComments = async (req, res) => {
-  const { page = 1, limit = page_limit } = req.query;
+  let { page = 1, limit = page_limit } = req.query;
+  page = Number(page);
+  limit = Number(limit);
 
   if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1) {
     return res.status(400).json({ message: "Invalid query" });
@@ -27,8 +29,8 @@ const getComments = async (req, res) => {
     comments.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
     // pagination
-    const offset = (page - 1) * limit;
-    return res.json(comments.slice(offset, offset + limit));
+    const offset = (page - 1) * +limit;
+    return res.json(comments.slice(offset, offset + +limit));
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });
   }

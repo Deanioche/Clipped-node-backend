@@ -3,7 +3,9 @@ import { page_limit } from "../utils/config.js";
 
 // get http GET /tag?userId=xxx
 const getTagsByUserId = async (req, res) => {
-  const { userId, page = 1, limit = page_limit } = req.query;
+  let { userId, page = 1, limit = page_limit } = req.query;
+  page = Number(page);
+  limit = Number(limit);
 
   if (!userId) {
     return res.status(400).json({ message: "userId is required" });

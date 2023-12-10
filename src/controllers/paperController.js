@@ -4,9 +4,11 @@ import { page_limit } from '../utils/config.js';
 
 // GET /paper/:id/comments
 const findPaperByAuthorId = async (req, res) => {
-  const { page = 1, limit = page_limit } = req.query;
+  const cursor = req.query.cursor || new Date();
+  const limit = Number(req.query.limit || page_limit);
+  console.log(cursor, limit);
 
-  if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1) {
+  if (!cursor || isNaN(limit) || limit < 1) {
     return res.status(400).json({ message: "Invalid query" });
   }
 
@@ -17,11 +19,14 @@ const findPaperByAuthorId = async (req, res) => {
       }
     });
 
-    papers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    papers.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     // pagination
-    const offset = (page - 1) * limit;
-    res.json(papers.slice(offset, offset + limit));
+    const offset = papers.findIndex(paper => new Date(paper.createdAt).getTime() < cursor.getTime());
+    res.json({
+      data: papers.slice(offset, offset + limit), cursor: papers[offset + limit]?.createdAt || null
+    });
+    console.log(papers[offset + limit]?.createdAt || null);
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });
   }
@@ -74,11 +79,16 @@ const deletePaperByIds = async (req, res) => {
 
 // POST /paper
 const createPaper = async (req, res) => {
+
+  // @TEST
+  const start = new Date(2021, 0, 1);
+  const end = new Date();
+  const randomDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
   try {
     const paper = await Paper.create({
       ...req.body,
       authorId: req.user.id,
-      publish: req.body.publish
+      createdAt: randomDate,
     });
 
     res.json(paper);
@@ -97,6 +107,7 @@ const updatePaper = async (req, res) => {
     if (paper.authorId !== req.user.id) {
       return res.status(403).json({ message: "Forbidden" });
     }
+
     await paper.update(req.body);
     res.json(paper);
   } catch (error) {

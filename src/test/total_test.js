@@ -27,10 +27,18 @@ const run_init_script = async () => {
      * follow
      * unfollow
      */
-    userList.filter(user => user.login !== userData.login).forEach(user => {
-      follow(headers, user.login);
+    userList.filter(user => user.login !== userData.login).forEach( async user => {
+      await follow(headers, user.login);
     });
 
+    /**
+     * @USER
+     * findFollowers
+     * findFollowings
+     */
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    await findFollowers(headers, userData.id);
+    await findFollowings(headers, userData.id);
 
     /**
     * @PAPER
@@ -38,7 +46,7 @@ const run_init_script = async () => {
     * delete/:id
     * delete
     */
-    const paperTitlesToCreate = ["AAAAA", "BBBBB", "CCCCC", "DDDDD"];
+    const paperTitlesToCreate = ["AAAAA", "BBBBB", "CCCCC", "DDDDD", "EEEEE", "FFFFF", "GGGGG", "HHHHH", "IIIII", "JJJJJ", "KKKKK", "LLLLL", "MMMMM", "NNNNN", "OOOOO", "PPPPP", "QQQQQ", "RRRRR", "SSSSS", "TTTTT", "UUUUU", "VVVVV", "WWWWW", "XXXXX", "YYYYY", "ZZZZZ"];
     await Promise.all(paperTitlesToCreate.map(title => createPaper(headers, title)));
     const papers_del = await getPapers(headers);
     const paperIds_del = papers_del.filter(paper => paper.authorId === userData.id).map(paper => paper.id);
@@ -73,38 +81,50 @@ const run_init_script = async () => {
     unlikePaper(headers, paperIds[0]);
     unBookmarkPaper(headers, paperIds[1]);
 
-
-
-    // create comments
+    /**
+     * @COMMENT
+     * create
+     */
     const papersToPutComment = [0, 0, 1, 2, 3, 3, 3, 3, 3, 3];
     for (let paperId of papersToPutComment) {
       await createComment(headers, paperIds[paperId]);
     }
 
-    // update or delete comments
+    /**
+     * @COMMENT
+     * get
+     * update
+     * delete
+     */
     for (let pId of paperIds) {
       const comments = await getComments(headers, pId);
       const cIds = comments.filter(cmt => cmt.userId === userData.id).map(cmt => cmt.id);
       for (let cId of cIds) {
-
         await updateComment(headers, pId, cId);
         await deleteComment(headers, pId, cId);
       }
     }
-
-    // create, update comments
     for (let pId of paperIds) {
       const cid = await createComment(headers, pId);
       await updateComment(headers, pId, cid);
     }
 
-    // create, get, update tag
+    /**
+     * @TAG
+     * create
+     * update
+     * get
+     */
     await Promise.all(Array(5).fill().map(() => createTag(headers)));
     const tagIds = await getTags(headers, userData.id).then((res) => res.map(tag => tag.id));
     for (let tagId of tagIds)
       await updateTag(headers, tagId);
 
-    // create, get clip
+    /**
+     * @CLIP
+     * create
+     * get
+     */
     await Promise.all(Array(5).fill().map(() => createClip(userData)));
 
     console.log();
@@ -147,11 +167,14 @@ const run_init_script = async () => {
       console.log(clipIdsByTag.length, clipIdsByTag);
     }
 
-    // like, unlike clipIds
+    /**
+     * @CLIP
+     * like
+     * unlike
+     */
     for (let clipId of clipIds) {
       await likeClip(headers, clipId);
     }
-
     await unlikeClip(headers, clipIds[0]);
 
     console.log();
@@ -231,17 +254,31 @@ const follow = async (headers, loginToFollow) => {
   await fetch(`http://localhost:3000/user/${userIdToFollow}/follow`, {
     method: "POST",
     headers,
-  }).then(res => res.json());
+  }).then(res => res.json())
+    .then(res => {
+      console.log(`👤 followed ${loginToFollow}`, { id: res.id });
+    })
 
-  await fetch(`http://localhost:3000/user/${userIdToFollow}/follow`, {
-    method: "DELETE",
-    headers,
-  }).then(res => res.json());
+}
 
-  await fetch(`http://localhost:3000/user/${userIdToFollow}/follow`, {
-    method: "POST",
+const findFollowers = async (headers, userId) => {
+  await fetch(`http://localhost:3000/user/${userId}/follower`, {
+    method: "GET",
     headers,
-  }).then(res => res.json());
+  }).then(res => res.json())
+    .then(res => {
+      console.log(`👤 followers`, res.map(e => e.Follower.login));
+    });
+}
+
+const findFollowings = async (headers, userId) => {
+  await fetch(`http://localhost:3000/user/${userId}/following`, {
+    method: "GET",
+    headers,
+  }).then(res => res.json())
+    .then(res => {
+      console.log(`👤 followings`, res.map(e => e.Following.login));
+    });
 }
 
 const getPapers = async (headers) => {
@@ -264,7 +301,7 @@ const createPaper = async (headers, title) => {
     })
   }).then(res => res.json())
     .then(res => {
-      console.log(`📝 created`, { id: res.id });
+      console.log(`📝 created`, { id: res.id, title: res.title });
       return res.id;
     });
 }
