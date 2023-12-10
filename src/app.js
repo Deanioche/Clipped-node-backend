@@ -14,7 +14,7 @@ import './utils/associations.js';
 /** 
  * @TEST
  */
-import { run_init_script } from './utils/init_script_for_test.js';
+import { run_init_script } from './test/total_test.js';
 
 config();
 const app = express();

@@ -2,9 +2,15 @@ import { Tag } from '../models/tag.js';
 import { Clip, Clip_link } from '../models/clip.js';
 import { Paper } from '../models/paper.js';
 import { User } from '../models/user.js';
+import { page_limit } from '../utils/config.js';
 
+// GET /clip
 const findClipsByFilter = async (req, res) => {
-  const { userId, tagId } = req.query;
+  const { userId, tagId, page = 1, limit = page_limit } = req.query;
+
+  if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1) {
+    return res.status(400).json({ message: "Invalid query" });
+  }
 
   if (!userId && !tagId) {
     return res.status(400).json({ message: "userId or tagId is required" });
@@ -28,7 +34,6 @@ const findClipsByFilter = async (req, res) => {
   try {
     let clips;
     if (tagId) {
-      // tagId가 주어진 경우, Tag 모델을 통해 Clip을 찾습니다.
       const tag = await Tag.findByPk(tagId, {
         include: [{
           model: Clip,
@@ -50,8 +55,11 @@ const findClipsByFilter = async (req, res) => {
       });
     }
 
-    clips.sort((a, b) => a.startedAt - b.startedAt);
-    res.json(clips);
+    clips.sort((a, b) => new Date(a.startedAt) - new Date(b.startedAt));
+
+    // pagination
+    const offset = (page - 1) * limit;
+    res.json(clips.slice(offset, offset + limit));
 
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });
@@ -128,6 +136,7 @@ const createClip = async (req, res) => {
   }
 }
 
+// PATCH /clip/:id
 const updateClip = async (req, res) => {
   try {
     const clip = await Clip.findByPk(req.params.id);
@@ -144,6 +153,7 @@ const updateClip = async (req, res) => {
   }
 }
 
+// DELETE /clip/:id
 const deleteClip = async (req, res) => {
   try {
     const clip = await Clip.findByPk(req.params.id);
@@ -160,6 +170,7 @@ const deleteClip = async (req, res) => {
   }
 }
 
+// PATCH /clip/:id/publish
 const publishClip = async (req, res) => {
   try {
     const clip = await Clip.findByPk(req.params.id);
@@ -176,6 +187,7 @@ const publishClip = async (req, res) => {
   }
 }
 
+// POST /clip/:id/like
 const likeClip = async (req, res) => {
   try {
     const clip = await Clip.findByPk(req.params.id);
@@ -190,6 +202,7 @@ const likeClip = async (req, res) => {
   }
 }
 
+// DELETE /clip/:id/like
 const unlikeClip = async (req, res) => {
   try {
     const clip = await Clip.findByPk(req.params.id);

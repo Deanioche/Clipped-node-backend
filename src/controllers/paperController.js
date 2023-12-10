@@ -1,22 +1,33 @@
-import { Tag } from '../models/tag.js';
-import { Clip } from '../models/clip.js';
 import { Paper } from '../models/paper.js';
 import { User } from '../models/user.js';
-import { PaperComment } from '../models/paperComment.js';
+import { page_limit } from '../utils/config.js';
 
+// GET /paper/:id/comments
 const findPaperByAuthorId = async (req, res) => {
+  const { page = 1, limit = page_limit } = req.query;
+
+  if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1) {
+    return res.status(400).json({ message: "Invalid query" });
+  }
+
   try {
     const papers = await Paper.findAll({
       where: {
         authorId: req.query.authorId,
       }
     });
-    res.json(papers);
+
+    papers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // pagination
+    const offset = (page - 1) * limit;
+    res.json(papers.slice(offset, offset + limit));
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });
   }
 };
 
+// GET /paper/:id
 const findPaperById = async (req, res) => {
   try {
     const paper = await Paper.findByPk(req.params.id);
@@ -28,6 +39,38 @@ const findPaperById = async (req, res) => {
     res.status(500).json({ message: "Internal server error", error });
   }
 };
+
+// DELETE /paper
+const deletePaperByIds = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+    const papers = await Paper.findAll({
+      where: {
+        id: ids,
+        authorId: req.user.id,
+      }
+    });
+    if (papers.length !== ids.length) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+    for (let i = 0; i < papers.length; i++) {
+      if (papers[i].authorId !== req.user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+    }
+    await Paper.destroy({
+      where: {
+        id: ids,
+      }
+    });
+    res.json({ message: "Papers deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
+}
 
 // POST /paper
 const createPaper = async (req, res) => {
@@ -44,6 +87,7 @@ const createPaper = async (req, res) => {
   }
 };
 
+// PUT /paper/:id
 const updatePaper = async (req, res) => {
   try {
     const paper = await Paper.findByPk(req.params.id);
@@ -60,6 +104,7 @@ const updatePaper = async (req, res) => {
   }
 };
 
+// PUT /paper/:id
 const publishPaper = async (req, res) => {
   try {
     const paper = await Paper.findByPk(req.params.id);
@@ -79,6 +124,7 @@ const publishPaper = async (req, res) => {
   }
 }
 
+// DELETE /paper/:id
 const deletePaper = async (req, res) => {
   try {
     const paper = await Paper.findByPk(req.params.id);
@@ -95,6 +141,7 @@ const deletePaper = async (req, res) => {
   }
 };
 
+// POST /paper/:id/like
 const createLike = async (req, res) => {
   try {
     const paper = await Paper.findByPk(req.params.id);
@@ -116,6 +163,7 @@ const createLike = async (req, res) => {
   }
 };
 
+// DELETE /paper/:id/like
 const deleteLike = async (req, res) => {
   try {
     const paper = await Paper.findByPk(req.params.id);
@@ -137,6 +185,7 @@ const deleteLike = async (req, res) => {
   }
 };
 
+// POST /paper/:id/clip
 const createPaperClip = async (req, res) => {
   try {
     const paper = await Paper.findByPk(req.params.id);
@@ -158,6 +207,7 @@ const createPaperClip = async (req, res) => {
   }
 };
 
+// DELETE /paper/:id/clip
 const deletePaperClip = async (req, res) => {
   try {
     const paper = await Paper.findByPk(req.params.id);
@@ -183,6 +233,7 @@ export {
   createPaper,
   findPaperByAuthorId,
   findPaperById,
+  deletePaperByIds,
   updatePaper,
   publishPaper,
   deletePaper,

@@ -1,6 +1,6 @@
 import express from 'express';
 import { Paper } from '../models/paper.js';
-import { createLike, createPaper, createPaperClip, deleteLike, deletePaper, deletePaperClip, findPaperByAuthorId, findPaperById, publishPaper, updatePaper } from '../controllers/paperController.js';
+import { createLike, createPaper, createPaperClip, deleteLike, deletePaper, deletePaperByIds, deletePaperClip, findPaperByAuthorId, findPaperById, publishPaper, updatePaper } from '../controllers/paperController.js';
 import { createComment, deleteComment, getComments, updateComment } from '../controllers/commentController.js';
 
 const router = express.Router();
@@ -20,6 +20,7 @@ router.get('/all', async (req, res) => {
 
 router.get('/', findPaperByAuthorId);
 router.post('/', createPaper);
+router.delete('/', deletePaperByIds);
 
 // @TODO
 router.delete('/', (req, res) => {

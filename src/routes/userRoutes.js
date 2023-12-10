@@ -1,9 +1,9 @@
 import express from 'express';
 import { me, findUserById, updateMe } from '../controllers/userController.js';
-import { User } from '../models/user.js';
 import { addFollow, deleteFollow, findFollowers, findFollowings } from '../controllers/followController.js';
 import authenticateJWT from '../utils/authenticateJWT.js';
 import authBeforeName from '../utils/authBeforeName.js';
+import { User } from '../models/user.js';
 
 const router = express.Router();
 
@@ -12,14 +12,6 @@ const router = express.Router();
 router.get('/all', authBeforeName, (req, res) => {
   User.findAll().then((users) => {
     users.sort((a, b) => b.createdAt - a.createdAt);
-    users.forEach((user) => {
-      console.log({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        login: user.login
-      });
-    });
     res.json(users);
   });
 });

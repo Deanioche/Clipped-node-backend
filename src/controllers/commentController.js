@@ -1,10 +1,17 @@
 import { Tag } from '../models/tag.js';
-import { Clip } from '../models/clip.js';
 import { Paper } from '../models/paper.js';
 import { User } from '../models/user.js';
 import { PaperComment } from '../models/paperComment.js';
+import { page_limit } from '../utils/config.js';
 
+// GET /paper/:id/comments
 const getComments = async (req, res) => {
+  const { page = 1, limit = page_limit } = req.query;
+
+  if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1) {
+    return res.status(400).json({ message: "Invalid query" });
+  }
+
   try {
     const paper = await Paper.findByPk(req.params.id);
     if (!paper)
@@ -15,12 +22,19 @@ const getComments = async (req, res) => {
         paperId: paper.id,
       }
     });
-    return res.json(comments);
+
+    // sort asc
+    comments.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+    // pagination
+    const offset = (page - 1) * limit;
+    return res.json(comments.slice(offset, offset + limit));
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });
   }
 }
 
+// POST /paper/:id/comments
 const createComment = async (req, res) => {
   try {
     const paper = await Paper.findByPk(req.params.id);
@@ -42,6 +56,8 @@ const createComment = async (req, res) => {
   }
 }
 
+
+// PUT /paper/:paperId/comments/:commentId
 const updateComment = async (req, res) => {
   try {
     const paper = await Paper.findByPk(req.params.paperId);
@@ -66,6 +82,7 @@ const updateComment = async (req, res) => {
   }
 }
 
+// DELETE /paper/:paperId/comments/:commentId
 const deleteComment = async (req, res) => {
   try {
     const paper = await Paper.findByPk(req.params.paperId);

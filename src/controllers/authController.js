@@ -6,6 +6,7 @@ import { User } from "../models/user.js"
 
 let refreshTokens = [];
 
+// POST /auth/login
 const login = async (req, res) => {
   const { login, password } = req.body;
 
@@ -22,6 +23,7 @@ const login = async (req, res) => {
   res.json({ accessToken, refreshToken });
 }
 
+// POST /auth/signup
 const signup = async (req, res) => {
   const { name, email, login, password } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -48,6 +50,7 @@ const signup = async (req, res) => {
   });
 }
 
+// POST /auth/token
 const token = async (req, res) => {
   const { refreshToken } = req.body;
   if (!refreshToken) {
