@@ -11,11 +11,6 @@ import paperRoutes from './routes/paperRoutes.js';
 import authenticateJWT from './utils/authenticateJWT.js';
 import './utils/associations.js';
 
-/** 
- * @TEST
- */
-import { run_init_script } from './test/total_test.js';
-
 config();
 const app = express();
 
@@ -25,11 +20,9 @@ app.use(express.urlencoded({ extended: true }));
 try {
   // public routes
   app.use('/auth', authRoutes);
-
-  // protected routes except PATCH /user/me
-  app.use('/user', userRoutes);
-
+  
   // protected routes
+  app.use('/user', userRoutes); // except PATCH /user/me
   app.use('/tag', authenticateJWT, tagRoutes);
   app.use('/clip', authenticateJWT, clipRoutes);
   app.use('/paper', authenticateJWT, paperRoutes);
@@ -40,19 +33,12 @@ try {
   console.error('🔥🔥 Error:', error);
 }
 
-// sync database and start server
-sequelize.sync({ force: true }).then(() => {
-// sequelize.sync().then(() => {
+sequelize.sync().then(() => {
   console.log('🔥 All tables created successfully!');
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 
-
-    /** 
-     * @TEST
-     */
-    run_init_script();
   });
 }).catch((error) => {
   console.error('🔥🔥 Error creating tables:', error);

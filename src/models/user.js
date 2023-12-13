@@ -8,7 +8,6 @@ const User = sequelize.define('user', {
   login: { type: DataTypes.STRING, allowNull: false, unique: true, },
   password: { type: DataTypes.STRING, allowNull: false, },
   joinMethod: { type: DataTypes.STRING, allowNull: false, defaultValue: 'email', },
-  // Optional fields
   username: { type: DataTypes.STRING, allowNull: true, },
   oneline: { type: DataTypes.STRING, allowNull: true, },
   hashtags: { type: DataTypes.STRING, allowNull: true, },
@@ -17,6 +16,7 @@ const User = sequelize.define('user', {
   major: { type: DataTypes.STRING, allowNull: true, },
   entryYear: { type: DataTypes.STRING, allowNull: true, },
   job: { type: DataTypes.STRING, allowNull: true, },
+  refreshToken: { type: DataTypes.STRING, allowNull: true, },
 }, {
   underscored: true,
   freezeTableName: true,

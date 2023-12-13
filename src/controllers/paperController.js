@@ -9,23 +9,19 @@ const findPaperByAuthorId = async (req, res) => {
   const limit = Number(req.query.limit || page_limit);
   const authorId = req.query.authorId;
 
-  // authorId 검증
   if (!authorId) {
     return res.status(400).json({ message: "Missing authorId in query" });
   }
 
-  // limit 검증
   if (isNaN(limit) || limit < 1) {
     return res.status(400).json({ message: "Invalid limit value" });
   }
 
-  // cursor 검증 및 설정
   if (cursor) {
     if (isNaN(new Date(cursor))) {
       return res.status(400).json({ message: "Invalid cursor format" });
     }
   } else {
-    // cursor가 제공되지 않은 경우, 현재 시간을 기준으로 설정
     cursor = new Date().toISOString();
   }
 
@@ -34,22 +30,17 @@ const findPaperByAuthorId = async (req, res) => {
       where: {
         authorId,
         createdAt: {
-          [Op.lt]: new Date(cursor)  // cursor보다 이전 시간을 가진 항목을 찾습니다.
+          [Op.lt]: new Date(cursor)
         }
       },
       limit,
-      order: [['createdAt', 'DESC']] // 최신 항목부터 가져옵니다.
+      order: [['createdAt', 'DESC']]
     });
 
-    const nextCursor = papers.length > 0 ? papers[papers.length - 1].createdAt.toISOString() : null;
+    let nextCursor = papers.length === limit ? papers[papers.length - 1].createdAt.toISOString() : null;
 
     res.json({
-      data: papers.map(paper => ({
-        id: paper.id,
-        // authorId: paper.authorId,
-        // title: paper.title,
-        createdAt: paper.createdAt,
-      })),
+      data: papers,
       cursor: nextCursor
     });
   } catch (error) {

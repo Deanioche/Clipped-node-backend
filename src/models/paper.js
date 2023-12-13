@@ -13,10 +13,4 @@ const Paper = sequelize.define('paper', {
   freezeTableName: true,
 });
 
-// const PaperImage = sequelize.define('paperImage', {
-//   id: { type: DataTypes.UUID, defaultValue: UUIDV4, primaryKey: true, allowNull: false, },
-//   paper_id: { type: DataTypes.UUID, allowNull: false },
-//   url: { type: DataTypes.STRING, allowNull: false },
-// });
-
 export { Paper }

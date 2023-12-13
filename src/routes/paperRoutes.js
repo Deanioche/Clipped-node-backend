@@ -29,15 +29,12 @@ router.delete('/', (req, res) => {
 
 router.patch('/:id/publish', publishPaper);
 
-// @TODO
 router.post('/:id/like', createLike);
 router.delete('/:id/like', deleteLike);
 
-// @TODO
 router.post('/:id/clip', createPaperClip);
 router.delete('/:id/clip', deletePaperClip);
 
-// @TODO: 4 apis for comment 
 router.get('/:id/comment', getComments);
 router.post('/:id/comment', createComment);
 router.patch('/:paperId/comment/:commentId', updateComment);

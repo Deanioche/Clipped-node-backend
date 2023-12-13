@@ -3,18 +3,8 @@ import { me, findUserById, updateMe } from '../controllers/userController.js';
 import { addFollow, deleteFollow, findFollowers, findFollowings } from '../controllers/followController.js';
 import authenticateJWT from '../utils/authenticateJWT.js';
 import authBeforeName from '../utils/authBeforeName.js';
-import { User } from '../models/user.js';
 
 const router = express.Router();
-
-// for test
-// return all users
-router.get('/all', authBeforeName, (req, res) => {
-  User.findAll().then((users) => {
-    users.sort((a, b) => b.createdAt - a.createdAt);
-    res.json(users);
-  });
-});
 
 router.get('/me', authenticateJWT, me);
 router.patch('/me', authBeforeName, updateMe);
