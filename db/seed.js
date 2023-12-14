@@ -21,6 +21,7 @@ let userList = [];
   await sequelize.sync({ force: true })
   await seed().then(async () => {
     console.log("🌱 seed done");
+    // await sync();
     // await sequelize.close();
   });
 })();
@@ -41,7 +42,6 @@ const seed = async () => {
   await createUser("AAAA");
   await createUser("BBBB");
   await createUser("CCCC");
-  await createUser("DDDD");
   userList = await User.findAll();
   console.log(`created users`, userList.map(user => user.login));
   await sync(true);
@@ -91,6 +91,8 @@ const seed = async () => {
    * create
   */
   userList.map(user => createComment(user, papers[0]));
+  userList.map(user => createComment(user, papers[1]));
+  userList.map(user => createComment(user, papers[2]));
   await sync(true);
 
   /**
@@ -106,7 +108,7 @@ const seed = async () => {
    * create
    * like
   */
-  userList.map(user => [...Array(5)].map(e => createClip(user)));
+  userList.map(user => [...Array(50)].map(e => createClip(user)));
   await sync(true);
   
   userList.map(user => likeClip(user));
@@ -154,11 +156,11 @@ const createUser = async (login) => {
 
 const followOthers = async (me) => {
   const others = userList.filter(user => user.id !== me.id).map(user => user.id);
-  const randomOthers = others.sort(() => Math.random() - Math.random()).slice(0, 2);
-  return await Promise.all(randomOthers.map(other =>
+  return await Promise.all(others.map(other =>
     Follow.create({
       followerId: me.id,
-      followingId: other
+      followingId: other,
+      createdAt: faker.date.past(),
     })
   ));
 }
@@ -173,7 +175,6 @@ const unfollowRandomOne = async (me) => {
     }
   });
 }
-
 
 const findFollowers = async (me) => {
 
@@ -244,6 +245,7 @@ const createComment = async (me, paper) => {
     paperId: paper.id,
     userId: me.id,
     content: faker.lorem.paragraph(),
+    createdAt: faker.date.past(),
   }).then(res => {
     console.log(`📝 ${me.login} commented`, paper.id);
     return res;
@@ -255,6 +257,7 @@ const createTag = async (me) => {
     userId: me.id,
     name: faker.music.genre(),
     color: faker.internet.color(),
+    createdAt: faker.date.past(),
   }).then(res => {
     console.log(`🏷 ${me.login} created`, res.id);
     return res;

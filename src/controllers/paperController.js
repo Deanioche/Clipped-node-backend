@@ -65,29 +65,30 @@ const findPaperById = async (req, res) => {
 const deletePaperByIds = async (req, res) => {
   try {
     const { ids } = req.body;
-    if (!ids) {
+    if (!ids || ids.length === 0) {
       return res.status(400).json({ message: "Invalid request" });
     }
+
     const papers = await Paper.findAll({
       where: {
         id: ids,
-        authorId: req.user.id,
       }
     });
-    if (papers.length !== ids.length) {
-      return res.status(400).json({ message: "Invalid request" });
+
+    const invalidPapers = papers.filter(paper => paper.authorId !== req.user.id);
+    if (invalidPapers.length > 0) {
+      return res.status(403).json({ message: "Forbidden: You do not have permission to delete one or more of the requested papers" });
     }
-    for (let i = 0; i < papers.length; i++) {
-      if (papers[i].authorId !== req.user.id) {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-    }
-    await Paper.destroy({
+
+    const delResult = await Paper.destroy({
       where: {
         id: ids,
+        authorId: req.user.id
       }
     });
-    res.json({ message: "Papers deleted" });
+
+    const deleteMessage = delResult <= 1 ? `${delResult} paper has been deleted` : `${delResult} papers have been deleted`;
+    res.json({ message: deleteMessage });
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });
   }

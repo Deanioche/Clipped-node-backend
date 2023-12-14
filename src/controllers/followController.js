@@ -1,72 +1,107 @@
 import { User } from "../models/user.js"
 import { Follow } from "../models/follow.js";
 import { page_limit } from "../utils/config.js";
+import { Op } from "sequelize";
 
 // GET /user/:id/followings
 const findFollowings = async (req, res) => {
-  const { page = 1, limit = page_limit } = req.query;
+  let cursor = req.query.cursor;
+  const limit = Number(req.query.limit || page_limit);
 
-  if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1) {
-    return res.status(400).json({ message: "Invalid query" });
+  if (isNaN(limit) || limit < 1) {
+    return res.status(400).json({ message: "Invalid limit value" });
   }
 
-  const user = await User.findByPk(req.params.id);
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
+  if (cursor) {
+    if (isNaN(new Date(cursor))) {
+      return res.status(400).json({ message: "Invalid cursor format" });
+    }
+  } else {
+    cursor = new Date().toISOString();
   }
-  const followings = await Follow.findAll({
-    where: {
-      followerId: user.id
-    },
-    include: [
-      {
-        model: User,
-        as: 'Following'
-      }
-    ]
-  });
 
-  followings.sort((a, b) => {
-    return new Date(b.createdAt) - new Date(a.createdAt);
-  });
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-  // pagination
-  const offset = (page - 1) * limit;
-  res.json(followings.slice(offset, offset + limit));
+    const followings = await Follow.findAll({
+      where: {
+        followerId: user.id,
+        createdAt: {
+          [Op.lt]: new Date(cursor)
+        }
+      },
+      limit,
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: User,
+          as: 'Following'
+        }
+      ]
+    });
+
+    let nextCursor = followings.length === limit ? followings[followings.length - 1].createdAt.toISOString() : null;
+
+    res.json({
+      data: followings,
+      cursor: nextCursor
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
 }
 
 // GET /user/:id/followers
 const findFollowers = async (req, res) => {
-  const { page = 1, limit = page_limit } = req.query;
+  let cursor = req.query.cursor;
+  const limit = Number(req.query.limit || page_limit);
 
-  if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1) {
-    return res.status(400).json({ message: "Invalid query" });
+  if (isNaN(limit) || limit < 1) {
+    return res.status(400).json({ message: "Invalid limit value" });
   }
 
-  const user = await User.findByPk(req.params.id);
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
+  if (cursor) {
+    if (isNaN(new Date(cursor))) {
+      return res.status(400).json({ message: "Invalid cursor format" });
+    }
+  } else {
+    cursor = new Date().toISOString();
   }
-  // find all followers of the user
-  const followers = await Follow.findAll({
-    where: {
-      followingId: user.id
-    },
-    include: [
-      {
-        model: User,
-        as: 'Follower'
-      }
-    ]
-  });
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-  followers.sort((a, b) => {
-    return new Date(b.createdAt) - new Date(a.createdAt);
-  });
+    const followers = await Follow.findAll({
+      where: {
+        followingId: user.id,
+        createdAt: {
+          [Op.lt]: new Date(cursor)
+        }
+      },
+      limit,
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: User,
+          as: 'Follower'
+        }
+      ]
+    });
 
-  // pagination
-  const offset = (page - 1) * limit;
-  res.json(followers.slice(offset, offset + limit));
+    let nextCursor = followers.length === limit ? followers[followers.length - 1].createdAt.toISOString() : null;
+
+    res.json({
+      data: followers,
+      cursor: nextCursor
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error });
+  }
 }
 
 // POST /user/:id/follow

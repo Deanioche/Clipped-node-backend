@@ -3,70 +3,81 @@ import { Clip, Clip_link } from '../models/clip.js';
 import { Paper } from '../models/paper.js';
 import { User } from '../models/user.js';
 import { page_limit } from '../utils/config.js';
+import { Op } from 'sequelize';
 
 // GET /clip
 const findClipsByFilter = async (req, res) => {
-  let { userId, tagId, page = 1, limit = page_limit } = req.query;
-  page = Number(page);
-  limit = Number(limit);
-
-  if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1) {
-    return res.status(400).json({ message: "Invalid query" });
-  }
-
-  if (!userId && !tagId) {
-    return res.status(400).json({ message: "userId or tagId is required" });
-  }
-
-  let whereClause = {};
-  let include = [
-    { model: Tag, attributes: ['id'], through: { attributes: [] } },
-    { model: Paper, attributes: [] },
-    { model: Clip_link, attributes: [] }
-  ];
-
-  if (userId) {
-    whereClause.userId = userId;
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found:", userId });
-    }
-  }
-
   try {
-    let clips;
+    let { cursor, limit, userId, tagId } = req.query;
+    limit = Number(limit || page_limit);
+    cursor = cursor || new Date('1970-01-01').toISOString();
+
+    if (!userId && !tagId) {
+      return res.status(400).json({ message: "userId or tagId is required" });
+    }
+    if (isNaN(limit) || limit < 1) {
+      return res.status(400).json({ message: "Invalid limit value" });
+    }
+
+    let whereClause = {
+      startedAt: { [Op.gt]: new Date(cursor) }
+    };
+    if (userId) {
+      whereClause.userId = userId;
+    }
+
+    let clips = [];
     if (tagId) {
-      const tag = await Tag.findByPk(tagId, {
-        include: [{
-          model: Clip,
-          where: whereClause,
-          include: include.slice(1) // Tag를 제외한 나머지 모델 포함
-        }]
-      });
-
-      if (!tag) {
-        return res.status(404).json({ message: "Tag not found", tagId });
-      }
-
-      clips = tag.clips;
+      clips = await fetchClipsWithTag(tagId, whereClause, limit);
     } else {
-      // userId만 주어진 경우
       clips = await Clip.findAll({
         where: whereClause,
-        include: include
+        order: [['startedAt', 'ASC']],
+        limit: limit
       });
     }
 
-    clips.sort((a, b) => new Date(a.startedAt) - new Date(b.startedAt));
+    let nextCursor = clips.length === limit ? clips[clips.length - 1].startedAt.toISOString() : null;
 
-    // pagination
-    const offset = (page - 1) * limit;
-    res.json(clips.slice(offset, offset + limit));
-
+    res.json({
+      data: clips,
+      cursor: nextCursor
+    });
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });
   }
 };
+
+async function fetchClipsWithTag(tagId, whereClause, limit) {
+  const tag = await Tag.findByPk(tagId, {
+    include: [{
+      model: Clip,
+      attributes: ['id'],
+    }]
+  });
+  if (!tag) {
+    throw new Error("Tag not found", 404);
+  }
+
+  const clipIds = tag.clips.map(clip => clip.id);
+
+  if (clipIds.length === 0) {
+    return []; // 해당 태그에 연결된 클립이 없는 경우
+  }
+
+  const clips = await Clip.findAll({
+    where: {
+      ...whereClause,
+      id: {
+        [Op.in]: clipIds // IN 쿼리를 사용하여 여러 ID에 해당하는 클립 조회
+      }
+    },
+    order: [['startedAt', 'ASC']],
+    limit: limit
+  });
+
+  return clips;
+}
 
 // GET /clip/:id
 const findClipById = async (req, res) => {

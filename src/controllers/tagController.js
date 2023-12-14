@@ -1,33 +1,53 @@
 import { Tag } from "../models/tag.js";
 import { page_limit } from "../utils/config.js";
+import { Op } from "sequelize";
 
-// get http GET /tag?userId=xxx
+// GET /tag?userId=xxx
 const getTagsByUserId = async (req, res) => {
-  let { userId, page = 1, limit = page_limit } = req.query;
-  page = Number(page);
-  limit = Number(limit);
+  let cursor = req.query.cursor;
+  const limit = Number(req.query.limit || page_limit);
+  const userId = req.query.userId;
 
   if (!userId) {
     return res.status(400).json({ message: "userId is required" });
   }
 
-  if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1) {
-    return res.status(400).json({ message: "Invalid query" });
+  if (isNaN(limit) || limit < 1) {
+    return res.status(400).json({ message: "Invalid limit value" });
+  }
+
+  // Default to an early date if no cursor is provided
+  if (!cursor) {
+    cursor = new Date('1970-01-01').toISOString();
+  } else if (isNaN(new Date(cursor))) {
+    return res.status(400).json({ message: "Invalid cursor format" });
   }
 
   try {
     const tags = await Tag.findAll({
       where: {
         userId,
-      }
+        createdAt: {
+          [Op.gt]: new Date(cursor) // Fetch records after the cursor
+        }
+      },
+      limit,
+      order: [['createdAt', 'ASC']] // Ascending order
     });
 
-    // sort asc
-    tags.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    // Determine the next cursor based on the last tag's createdAt
+    let nextCursor = tags.length === limit ? tags[tags.length - 1].createdAt.toISOString() : null;
 
-    // pagination
-    const offset = (page - 1) * limit;
-    res.json(tags.slice(offset, offset + limit));
+    res.json({
+      data: tags.map(tag => {
+        return {
+          id: tag.id,
+          createdAt: tag.createdAt,
+          updatedAt: tag.updatedAt,
+        }
+      }),
+      cursor: nextCursor
+    });
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });
   }
