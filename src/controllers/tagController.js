@@ -37,13 +37,7 @@ const getTagsByUserId = async (req, res) => {
     let nextCursor = tags.length === limit ? tags[tags.length - 1].createdAt.toISOString() : null;
 
     res.json({
-      data: tags.map(tag => {
-        return {
-          id: tag.id,
-          createdAt: tag.createdAt,
-          updatedAt: tag.updatedAt,
-        }
-      }),
+      data: tags,
       cursor: nextCursor
     });
   } catch (error) {
