@@ -3,6 +3,8 @@
 ## Usage
 ### Start the server
 ```
+cd docker && docker-compose up -d
+
 npm start
 ```
 
