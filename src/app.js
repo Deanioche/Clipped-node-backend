@@ -43,5 +43,3 @@ sequelize.sync().then(() => {
 }).catch((error) => {
   console.error('🔥🔥 Error creating tables:', error);
 });
-
-

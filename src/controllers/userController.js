@@ -31,7 +31,6 @@ const updateMe = async (req, res) => {
     return res.status(404).json({ message: "User not found" });
   }
 
-  // check if email is already taken
   if (req.body.email) {
     const userWithEmail = await User.findOne({
       where: {

@@ -16,7 +16,6 @@ const getTagsByUserId = async (req, res) => {
     return res.status(400).json({ message: "Invalid limit value" });
   }
 
-  // Default to an early date if no cursor is provided
   if (!cursor) {
     cursor = new Date('1970-01-01').toISOString();
   } else if (isNaN(new Date(cursor))) {
@@ -28,14 +27,13 @@ const getTagsByUserId = async (req, res) => {
       where: {
         userId,
         createdAt: {
-          [Op.gt]: new Date(cursor) // Fetch records after the cursor
+          [Op.gt]: new Date(cursor)
         }
       },
       limit,
-      order: [['createdAt', 'ASC']] // Ascending order
+      order: [['createdAt', 'ASC']]
     });
 
-    // Determine the next cursor based on the last tag's createdAt
     let nextCursor = tags.length === limit ? tags[tags.length - 1].createdAt.toISOString() : null;
 
     res.json({

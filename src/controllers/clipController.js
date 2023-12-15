@@ -62,14 +62,14 @@ async function fetchClipsWithTag(tagId, whereClause, limit) {
   const clipIds = tag.clips.map(clip => clip.id);
 
   if (clipIds.length === 0) {
-    return []; // 해당 태그에 연결된 클립이 없는 경우
+    return [];
   }
 
   const clips = await Clip.findAll({
     where: {
       ...whereClause,
       id: {
-        [Op.in]: clipIds // IN 쿼리를 사용하여 여러 ID에 해당하는 클립 조회
+        [Op.in]: clipIds
       }
     },
     order: [['startedAt', 'ASC']],
@@ -103,16 +103,13 @@ const createClip = async (req, res) => {
       return res.status(400).json({ message: "content is required" });
     }
 
-    // 클립 생성
     const clip = await Clip.create({
       ...req.body,
       userId: req.user.id,
     });
 
-    // tags와 papers 배열에서 id 추출
     const { tags, papers, links } = req.body;
 
-    // tags가 있으면 관계 설정
     if (tags && tags.length > 0) {
       const tagInstances = await Tag.findAll({
         where: { id: tags }
@@ -120,7 +117,6 @@ const createClip = async (req, res) => {
       await clip.addTags(tagInstances);
     }
 
-    // papers가 있으면 관계 설정
     if (papers && papers.length > 0) {
       const paperInstances = await Paper.findAll({
         where: { id: papers }
@@ -137,10 +133,9 @@ const createClip = async (req, res) => {
       }
     }
 
-    // 최종 클립 데이터 반환
     const result = await Clip.findOne({
       where: { id: clip.id },
-      include: [Tag, Paper, Clip_link] // 클립과 연관된 태그와 페이퍼 포함
+      include: [Tag, Paper, Clip_link]
     });
     res.json(result);
 

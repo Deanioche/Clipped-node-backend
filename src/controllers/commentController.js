@@ -18,7 +18,6 @@ const getComments = async (req, res) => {
     return res.status(400).json({ message: "Invalid limit value" });
   }
 
-  // If there's no cursor provided, use a very early date
   if (!cursor) {
     cursor = new Date('1970-01-01').toISOString();
   } else if (isNaN(new Date(cursor))) {
@@ -39,7 +38,7 @@ const getComments = async (req, res) => {
         }
       },
       limit,
-      order: [['createdAt', 'ASC']] // Ascending order
+      order: [['createdAt', 'ASC']]
     });
 
     let nextCursor = comments.length === limit ? comments[comments.length - 1].createdAt.toISOString() : null;

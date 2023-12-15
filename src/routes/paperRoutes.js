@@ -22,11 +22,6 @@ router.get('/', findPaperByAuthorId);
 router.post('/', createPaper);
 router.delete('/', deletePaperByIds);
 
-// @TODO
-router.delete('/', (req, res) => {
-  res.status(405).json({ message: "send ids" });
-});
-
 router.patch('/:id/publish', publishPaper);
 
 router.post('/:id/like', createLike);
