@@ -1,10 +1,5 @@
-import bcrypt from "bcrypt"
-import jwt from "jsonwebtoken"
 import { Op } from "sequelize"
-
 import { User } from "../models/user.js"
-
-let refreshTokens = [];
 
 const me = async (req, res) => {
   const user = await User.findByPk(req.user.id);

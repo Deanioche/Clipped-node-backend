@@ -1,7 +1,6 @@
 import { Tag } from '../models/tag.js';
 import { Clip, Clip_link } from '../models/clip.js';
 import { Paper } from '../models/paper.js';
-import { User } from '../models/user.js';
 import { page_limit } from '../utils/config.js';
 import { Op } from 'sequelize';
 

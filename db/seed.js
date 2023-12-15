@@ -21,8 +21,6 @@ let userList = [];
   await sequelize.sync({ force: true })
   await seed().then(async () => {
     console.log("🌱 seed done");
-    // await sync();
-    // await sequelize.close();
   });
 })();
 

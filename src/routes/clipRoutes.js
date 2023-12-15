@@ -1,7 +1,6 @@
 import express from 'express';
 import { Tag } from '../models/tag.js';
 import { Clip } from '../models/clip.js';
-import { Paper } from '../models/paper.js';
 import {
   createClip, 
   findClipById, 

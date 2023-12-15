@@ -1,4 +1,4 @@
-import { DataTypes, UUIDV4, NOW } from 'sequelize';
+import { DataTypes, UUIDV4 } from 'sequelize';
 import sequelize from '../utils/db.js';
 
 const User = sequelize.define('user', {

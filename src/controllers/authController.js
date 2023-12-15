@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import { Op, where } from "sequelize"
+import { Op } from "sequelize"
 
 import { User } from "../models/user.js"
 import { validationResult } from "express-validator"
