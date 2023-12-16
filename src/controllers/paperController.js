@@ -2,6 +2,7 @@ import { Paper } from '../models/paper.js';
 import { User } from '../models/user.js';
 import { page_limit } from '../utils/config.js';
 import { Op } from 'sequelize';
+import { validateUuid } from '../utils/validateUuid.js';
 
 // GET /paper/:id/comments
 const findPaperByAuthorId = async (req, res) => {

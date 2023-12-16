@@ -3,6 +3,7 @@ import { Clip, Clip_link } from '../models/clip.js';
 import { Paper } from '../models/paper.js';
 import { page_limit } from '../utils/config.js';
 import { Op } from 'sequelize';
+import { validateUuid } from '../utils/validateUuid.js';
 
 // GET /clip
 const findClipsByFilter = async (req, res) => {

@@ -1,6 +1,7 @@
 import { Tag } from "../models/tag.js";
 import { page_limit } from "../utils/config.js";
 import { Op } from "sequelize";
+import { validateUuid } from "../utils/validateUuid.js";
 
 // GET /tag?userId=xxx
 const getTagsByUserId = async (req, res) => {
