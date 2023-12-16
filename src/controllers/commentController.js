@@ -6,7 +6,7 @@ import { Op } from 'sequelize';
 
 // GET /paper/:id/comments
 const getComments = async (req, res) => {
-  let cursor = req.query.cursor;
+  const cursor = req.query.cursor;
   const limit = Number(req.query.limit || page_limit);
   const paperId = req.params.id;
 
@@ -18,10 +18,31 @@ const getComments = async (req, res) => {
     return res.status(400).json({ message: "Invalid limit value" });
   }
 
-  if (!cursor) {
-    cursor = new Date('1970-01-01').toISOString();
-  } else if (isNaN(new Date(cursor))) {
-    return res.status(400).json({ message: "Invalid cursor format" });
+  let whereCondition = { paperId };
+
+  if (cursor) {
+    const [cursorDateStr, cursorId] = cursor.split(",");
+    const cursorDate = new Date(cursorDateStr);
+    if (isNaN(cursorDate)) {
+      return res.status(400).json({ message: "Invalid cursor format (date)" });
+    }
+    if (!validateUuid(cursorId)) {
+      return res.status(400).json({ message: "Invalid cursor format (id)" });
+    }
+    whereCondition = {
+      ...whereCondition,
+      [Op.or]: [
+        { createdAt: { [Op.gt]: cursorDate } },
+        {
+          [Op.and]: [
+            { createdAt: cursorDate },
+            { id: { [Op.gt]: cursorId } }
+          ]
+        }
+      ]
+    };
+  } else {
+    whereCondition.createdAt = { [Op.gt]: new Date('1970-01-01') };
   }
 
   try {
@@ -31,17 +52,12 @@ const getComments = async (req, res) => {
     }
 
     const comments = await PaperComment.findAll({
-      where: {
-        paperId: paper.id,
-        createdAt: {
-          [Op.gt]: new Date(cursor)
-        }
-      },
+      where: whereCondition,
       limit,
-      order: [['createdAt', 'ASC']]
+      order: [['createdAt', 'ASC'], ['id', 'ASC']],
     });
 
-    let nextCursor = comments.length === limit ? comments[comments.length - 1].createdAt.toISOString() : null;
+    let nextCursor = comments.length === limit ? comments[comments.length - 1].createdAt.toISOString() + "," + comments[comments.length - 1].id : null;
 
     res.json({
       data: comments,
@@ -50,7 +66,7 @@ const getComments = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });
   }
-}
+};
 
 // POST /paper/:id/comments
 const createComment = async (req, res) => {

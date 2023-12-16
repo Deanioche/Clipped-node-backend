@@ -9,7 +9,6 @@ const findClipsByFilter = async (req, res) => {
   try {
     let { cursor, limit, userId, tagId } = req.query;
     limit = Number(limit || page_limit);
-    cursor = cursor || new Date('1970-01-01').toISOString();
 
     if (!userId && !tagId) {
       return res.status(400).json({ message: "userId or tagId is required" });
@@ -18,9 +17,32 @@ const findClipsByFilter = async (req, res) => {
       return res.status(400).json({ message: "Invalid limit value" });
     }
 
-    let whereClause = {
-      startedAt: { [Op.gt]: new Date(cursor) }
-    };
+    let whereClause = {};
+
+    if (cursor) {
+      const [cursorDateStr, cursorId] = cursor.split(",");
+      const cursorDate = new Date(cursorDateStr);
+      if (isNaN(cursorDate)) {
+        return res.status(400).json({ message: "Invalid cursor format (date)" });
+      }
+      if (!validateUuid(cursorId)) {
+        return res.status(400).json({ message: "Invalid cursor format (id)" });
+      }
+      whereClause = {
+        [Op.or]: [
+          { startedAt: { [Op.gt]: cursorDate } },
+          {
+            [Op.and]: [
+              { startedAt: cursorDate },
+              { id: { [Op.gt]: cursorId } }
+            ]
+          }
+        ]
+      };
+    } else {
+      whereClause.startedAt = { [Op.gt]: new Date('1970-01-01') };
+    }
+
     if (userId) {
       whereClause.userId = userId;
     }
@@ -31,12 +53,12 @@ const findClipsByFilter = async (req, res) => {
     } else {
       clips = await Clip.findAll({
         where: whereClause,
-        order: [['startedAt', 'ASC']],
-        limit: limit
+        order: [['startedAt', 'ASC'], ['id', 'ASC']],
+        limit
       });
     }
 
-    let nextCursor = clips.length === limit ? clips[clips.length - 1].startedAt.toISOString() : null;
+    let nextCursor = clips.length === limit ? clips[clips.length - 1].startedAt.toISOString() + "," + clips[clips.length - 1].id : null;
 
     res.json({
       data: clips,
@@ -51,11 +73,11 @@ async function fetchClipsWithTag(tagId, whereClause, limit) {
   const tag = await Tag.findByPk(tagId, {
     include: [{
       model: Clip,
-      attributes: ['id'],
+      attributes: ['id', 'startedAt'],
     }]
   });
   if (!tag) {
-    throw new Error("Tag not found", 404);
+    throw new Error("Tag not found");
   }
 
   const clipIds = tag.clips.map(clip => clip.id);
@@ -64,19 +86,17 @@ async function fetchClipsWithTag(tagId, whereClause, limit) {
     return [];
   }
 
+  whereClause.id = { [Op.in]: clipIds };
+
   const clips = await Clip.findAll({
-    where: {
-      ...whereClause,
-      id: {
-        [Op.in]: clipIds
-      }
-    },
-    order: [['startedAt', 'ASC']],
+    where: whereClause,
+    order: [['startedAt', 'ASC'], ['id', 'ASC']],
     limit: limit
   });
 
   return clips;
 }
+
 
 // GET /clip/:id
 const findClipById = async (req, res) => {

@@ -5,7 +5,7 @@ import { Op } from 'sequelize';
 
 // GET /paper/:id/comments
 const findPaperByAuthorId = async (req, res) => {
-  let cursor = req.query.cursor;
+  const cursor = req.query.cursor;
   const limit = Number(req.query.limit || page_limit);
   const authorId = req.query.authorId;
 
@@ -17,27 +17,39 @@ const findPaperByAuthorId = async (req, res) => {
     return res.status(400).json({ message: "Invalid limit value" });
   }
 
+  let whereCondition = { authorId };
+
   if (cursor) {
-    if (isNaN(new Date(cursor))) {
-      return res.status(400).json({ message: "Invalid cursor format" });
+    const [cursorDateStr, cursorId] = cursor.split(",");
+    const cursorDate = new Date(cursorDateStr);
+    if (isNaN(cursorDate)) {
+      return res.status(400).json({ message: "Invalid cursor format (date)" });
     }
-  } else {
-    cursor = new Date().toISOString();
+    if (!validateUuid(cursorId)) {
+      return res.status(400).json({ message: "Invalid cursor format (id)" });
+    }
+    whereCondition = {
+      ...whereCondition,
+      [Op.or]: [
+        { createdAt: { [Op.lt]: cursorDate } },
+        {
+          [Op.and]: [
+            { createdAt: cursorDate },
+            { id: { [Op.gt]: cursorId } }
+          ]
+        }
+      ]
+    };
   }
 
   try {
     const papers = await Paper.findAll({
-      where: {
-        authorId,
-        createdAt: {
-          [Op.lt]: new Date(cursor)
-        }
-      },
+      where: whereCondition,
       limit,
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC'], ['id', 'ASC']],
     });
 
-    let nextCursor = papers.length === limit ? papers[papers.length - 1].createdAt.toISOString() : null;
+    let nextCursor = papers.length === limit ? papers[papers.length - 1].createdAt.toISOString() + "," + papers[papers.length - 1].id : null;
 
     res.json({
       data: papers,

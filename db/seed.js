@@ -40,6 +40,11 @@ const seed = async () => {
   await createUser("AAAA");
   await createUser("BBBB");
   await createUser("CCCC");
+  await createUser("DDDD");
+  await createUser("EEEE");
+  await createUser("FFFF");
+  await createUser("GGGG");
+  await createUser("HHHH");
   userList = await User.findAll();
   console.log(`created users`, userList.map(user => user.login));
   await sync(true);

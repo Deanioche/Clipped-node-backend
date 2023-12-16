@@ -2,6 +2,7 @@ import { User } from "../models/user.js"
 import { Follow } from "../models/follow.js";
 import { page_limit } from "../utils/config.js";
 import { Op } from "sequelize";
+import { validateUuid } from "../utils/validateUuid.js";
 
 // GET /user/:id/followings
 const findFollowings = async (req, res) => {
@@ -12,12 +13,29 @@ const findFollowings = async (req, res) => {
     return res.status(400).json({ message: "Invalid limit value" });
   }
 
+  let whereCondition;
   if (cursor) {
-    if (isNaN(new Date(cursor))) {
+    const [createdAtCursor, idCursor] = cursor.split(',');
+    if (createdAtCursor && idCursor && !isNaN(new Date(createdAtCursor)) && validateUuid(idCursor)) {
+      whereCondition = {
+        followerId: req.params.id,
+        [Op.or]: [
+          { createdAt: { [Op.lt]: new Date(createdAtCursor) } },
+          {
+            [Op.and]: [
+              { createdAt: new Date(createdAtCursor) },
+              { id: { [Op.lt]: idCursor } }
+            ]
+          }
+        ]
+      };
+    } else {
       return res.status(400).json({ message: "Invalid cursor format" });
     }
   } else {
-    cursor = new Date().toISOString();
+    whereCondition = {
+      followerId: req.params.id
+    };
   }
 
   try {
@@ -27,23 +45,18 @@ const findFollowings = async (req, res) => {
     }
 
     const followings = await Follow.findAll({
-      where: {
-        followerId: user.id,
-        createdAt: {
-          [Op.lt]: new Date(cursor)
-        }
-      },
+      where: whereCondition,
       limit,
-      order: [['createdAt', 'DESC']],
-      include: [
-        {
-          model: User,
-          as: 'Following'
-        }
-      ]
+      order: [['createdAt', 'DESC'], ['id', 'DESC']],
+      include: [{
+        model: User,
+        as: 'Following'
+      }]
     });
 
-    let nextCursor = followings.length === limit ? followings[followings.length - 1].createdAt.toISOString() : null;
+    let nextCursor = followings.length === limit ?
+      `${followings[followings.length - 1].createdAt.toISOString()},${followings[followings.length - 1].id}` :
+      null;
 
     res.json({
       data: followings,
@@ -52,7 +65,7 @@ const findFollowings = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });
   }
-}
+};
 
 // GET /user/:id/followers
 const findFollowers = async (req, res) => {
@@ -63,37 +76,45 @@ const findFollowers = async (req, res) => {
     return res.status(400).json({ message: "Invalid limit value" });
   }
 
+  let whereCondition;
   if (cursor) {
-    if (isNaN(new Date(cursor))) {
+    const [createdAtCursor, idCursor] = cursor.split(',');
+    if (createdAtCursor && idCursor && !isNaN(new Date(createdAtCursor)) && validateUuid(idCursor)) {
+      whereCondition = {
+        followingId: req.params.id,
+        [Op.or]: [
+          { createdAt: { [Op.lt]: new Date(createdAtCursor) } },
+          {
+            [Op.and]: [
+              { createdAt: new Date(createdAtCursor) },
+              { id: { [Op.lt]: idCursor } }
+            ]
+          }
+        ]
+      };
+    } else {
       return res.status(400).json({ message: "Invalid cursor format" });
     }
   } else {
-    cursor = new Date().toISOString();
+    whereCondition = {
+      followingId: req.params.id
+    };
   }
-  try {
-    const user = await User.findByPk(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
 
+  try {
     const followers = await Follow.findAll({
-      where: {
-        followingId: user.id,
-        createdAt: {
-          [Op.lt]: new Date(cursor)
-        }
-      },
+      where: whereCondition,
       limit,
-      order: [['createdAt', 'DESC']],
-      include: [
-        {
-          model: User,
-          as: 'Follower'
-        }
-      ]
+      order: [['createdAt', 'DESC'], ['id', 'DESC']],
+      include: [{
+        model: User,
+        as: 'Follower'
+      }]
     });
 
-    let nextCursor = followers.length === limit ? followers[followers.length - 1].createdAt.toISOString() : null;
+    let nextCursor = followers.length === limit ?
+      `${followers[followers.length - 1].createdAt.toISOString()},${followers[followers.length - 1].id}` :
+      null;
 
     res.json({
       data: followers,
@@ -102,7 +123,7 @@ const findFollowers = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Internal server error", error });
   }
-}
+};
 
 // POST /user/:id/follow
 const addFollow = async (req, res) => {

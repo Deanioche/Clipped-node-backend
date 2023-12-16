@@ -4,7 +4,7 @@ import { Op } from "sequelize";
 
 // GET /tag?userId=xxx
 const getTagsByUserId = async (req, res) => {
-  let cursor = req.query.cursor;
+  const cursor = req.query.cursor;
   const limit = Number(req.query.limit || page_limit);
   const userId = req.query.userId;
 
@@ -16,25 +16,41 @@ const getTagsByUserId = async (req, res) => {
     return res.status(400).json({ message: "Invalid limit value" });
   }
 
-  if (!cursor) {
-    cursor = new Date('1970-01-01').toISOString();
-  } else if (isNaN(new Date(cursor))) {
-    return res.status(400).json({ message: "Invalid cursor format" });
+  let whereCondition = { userId };
+
+  if (cursor) {
+    const [cursorDateStr, cursorId] = cursor.split(",");
+    const cursorDate = new Date(cursorDateStr);
+    if (isNaN(cursorDate)) {
+      return res.status(400).json({ message: "Invalid cursor format (date)" });
+    }
+    if (!validateUuid(cursorId)) {
+      return res.status(400).json({ message: "Invalid cursor format (id)" });
+    }
+    whereCondition = {
+      ...whereCondition,
+      [Op.or]: [
+        { createdAt: { [Op.gt]: cursorDate } },
+        {
+          [Op.and]: [
+            { createdAt: cursorDate },
+            { id: { [Op.gt]: cursorId } }
+          ]
+        }
+      ]
+    };
+  } else {
+    whereCondition.createdAt = { [Op.gt]: new Date('1970-01-01') };
   }
 
   try {
     const tags = await Tag.findAll({
-      where: {
-        userId,
-        createdAt: {
-          [Op.gt]: new Date(cursor)
-        }
-      },
+      where: whereCondition,
       limit,
-      order: [['createdAt', 'ASC']]
+      order: [['createdAt', 'ASC'], ['id', 'ASC']],
     });
 
-    let nextCursor = tags.length === limit ? tags[tags.length - 1].createdAt.toISOString() : null;
+    let nextCursor = tags.length === limit ? tags[tags.length - 1].createdAt.toISOString() + "," + tags[tags.length - 1].id : null;
 
     res.json({
       data: tags,
